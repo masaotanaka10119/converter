@@ -189,7 +189,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const newRow = conversionResultTableBody.insertRow();
                     const cell1 = newRow.insertCell();
                     const cell2 = newRow.insertCell();
+                    
                     cell1.textContent = line;
+                    cell1.contentEditable = "true"; // 変換したい文字のセルを入力可能にする
                     cell2.textContent = ''; // 変換後は空で初期化
                 });
             })
@@ -213,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 変換結果を更新
         for (let i = 0; i < conversionResultTableBody.rows.length; i++) {
             const row = conversionResultTableBody.rows[i];
-            const textToConvert = row.cells[0].textContent.trim();
+            const textToConvert = row.cells[0].textContent.trim(); // contenteditableの現在の値を取得
             row.cells[1].textContent = conversionRules[textToConvert] || '';
         }
     });
@@ -229,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const resultValues = new Set();
         for (let i = 0; i < conversionResultTableBody.rows.length; i++) {
-            const textToCheck = conversionResultTableBody.rows[i].cells[0].textContent.trim();
+            const textToCheck = conversionResultTableBody.rows[i].cells[0].textContent.trim(); // contenteditableの現在の値を取得
             if (!databaseValues.has(textToCheck) && !resultValues.has(textToCheck)) {
                 const newRow = unregisteredTableTbody.insertRow();
                 const cell1 = newRow.insertCell();
@@ -314,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let allConvertedText = '';
         for (let i = 0; i < conversionResultTableBody.rows.length; i++) {
             const row = conversionResultTableBody.rows[i];
-            const convertedText = row.cells[1].textContent.trim();
+            const convertedText = row.cells[1].textContent.trim(); // contenteditableの現在の値を取得
             if (convertedText) {
                 allConvertedText += convertedText + '\n';
             }
