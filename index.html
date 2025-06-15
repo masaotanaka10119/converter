@@ -4,57 +4,60 @@
 <meta charset="UTF-8">
 <title>料理材料変換アプリ</title>
 <style>
+/* ====================
+ * CSSセクション: アプリの見た目とレイアウトの定義
+ * ==================== */
 body {
-    display: flex;
-    gap: 1%; /* デバイス幅に対するパーセントでgapを指定 */
-    height: 98vh; /* デバイス高さに対するパーセント */
-    margin: 1%; /* デバイス幅に対するパーセントでmarginを指定 */
+    display: flex; /* パネルを横並びにする */
+    gap: 1%; /* パネル間の隙間 */
+    height: 98vh; /* ページの高さをビューポートの98%に設定 */
+    margin: 1%; /* ページ全体の余白 */
 }
 
 .panel {
-    flex: 1;
-    border: 1px solid #ccc;
-    padding: 1%; /* デバイス幅に対するパーセントでpaddingを指定 */
-    height: 100%; /* 親要素（body）の高さに対するパーセント */
-    box-sizing: border-box; /* paddingとborderを要素の幅と高さに含める */
-    overflow-y: auto; /* 内容が多い場合にスクロール可能にする */
+    flex: 1; /* 利用可能なスペースを均等に分割して横幅を決定 */
+    border: 1px solid #ccc; /* パネルの枠線 */
+    padding: 1%; /* パネル内の余白 */
+    height: 100%; /* 親要素の高さに合わせる */
+    box-sizing: border-box; /* パディングとボーダーを要素の幅と高さに含める */
+    overflow-y: auto; /* 内容がはみ出たら縦スクロールバーを表示 */
 }
 
 h2 {
-    font-size: 2vh; /* デバイス高さに対するパーセントでフォントサイズを指定 */
-    margin-bottom: 1vh;
+    font-size: 2vh; /* 見出しのフォントサイズ */
+    margin-bottom: 1vh; /* 見出しの下の余白 */
 }
 
 table {
-    width: 98%; /* パネルの幅に対するパーセント */
-    border-collapse: collapse;
-    margin-bottom: 1vh;
-    font-size: 1.5vh; /* デバイス高さに対するパーセントでフォントサイズを指定 */
+    width: 98%; /* テーブルの幅 */
+    border-collapse: collapse; /* セルの境界線を結合 */
+    margin-bottom: 1vh; /* テーブルの下の余白 */
+    font-size: 1.5vh; /* テーブル内のフォントサイズ */
 }
 
 th, td {
-    border: 1px solid #ddd;
-    padding: 0.5vh; /* デバイス高さに対するパーセントでpaddingを指定 */
-    text-align: left;
+    border: 1px solid #ddd; /* セルの枠線 */
+    padding: 0.5vh; /* セル内の余白 */
+    text-align: left; /* テキストを左寄せ */
 }
 
 button {
-    width: 98%; /* パネルの幅に対するパーセント */
-    padding: 1vh; /* デバイス高さに対するパーセントでpaddingを指定 */
-    margin-bottom: 0.5vh;
-    font-size: 1.5vh; /* デバイス高さに対するパーセントでフォントサイズを指定 */
-    box-sizing: border-box; /* paddingを要素の幅に含める */
+    width: 98%; /* ボタンの幅 */
+    padding: 1vh; /* ボタン内の余白 */
+    margin-bottom: 0.5vh; /* ボタンの下の余白 */
+    font-size: 1.5vh; /* ボタンのフォントサイズ */
+    box-sizing: border-box; /* パディングを幅に含める */
 }
 
 .selected {
-    background-color: yellow;
+    background-color: yellow; /* 選択された行の背景色 */
 }
 
 input[type="text"] {
-    width: 95%; /* セルの幅に対するパーセント */
-    padding: 0.3vh;
-    font-size: 1.5vh;
-    box-sizing: border-box;
+    width: 95%; /* テキスト入力欄の幅 */
+    padding: 0.3vh; /* テキスト入力欄内の余白 */
+    font-size: 1.5vh; /* テキスト入力欄のフォントサイズ */
+    box-sizing: border-box; /* パディングを幅に含める */
 }
 </style>
 </head>
@@ -110,11 +113,15 @@ input[type="text"] {
 </div>
 
 <script>
+// DOMContentLoaded: HTMLの読み込みが完了したらスクリプトを実行
 document.addEventListener('DOMContentLoaded', () => {
+    // === DOM要素の取得 ===
+    // 各テーブルの<tbody>要素を取得
     const databaseTableTbody = document.getElementById('databaseTable').getElementsByTagName('tbody')[0];
     const unregisteredTableTbody = document.getElementById('unregisteredTable').getElementsByTagName('tbody')[0];
     const conversionResultTableBody = document.getElementById('conversionResultTable').getElementsByTagName('tbody')[0];
 
+    // 各ボタン要素を取得
     const deleteDatabaseRowBtn = document.getElementById('deleteDatabaseRowBtn');
     const deleteUnregisteredRowBtn = document.getElementById('deleteUnregisteredRowBtn');
     const deleteResultRowBtn = document.getElementById('deleteResultRowBtn');
@@ -125,69 +132,212 @@ document.addEventListener('DOMContentLoaded', () => {
     const deduplicateDatabaseBtn = document.getElementById('deduplicateDatabaseBtn');
     const copyAllResultBtn = document.getElementById('copyAllResultBtn');
 
-    // 行選択処理（共通）
-    function selectRow(newRow) {
-        // 現在選択されている行の'selected'クラスをすべて削除
+    // === 関数定義 ===
+
+    /**
+     * テーブルの行をクリックした際の処理（行の選択/複数選択）
+     * @param {Event} event - クリックイベントオブジェクト
+     */
+    function handleTableRowClick(event) {
+        const row = event.target.closest('tr'); // クリックされた要素から最も近い<tr>要素を取得
+        if (!row) return; // <tr>要素でなければ何もしない
+
+        // Ctrlキー（Windows）またはCommandキー（Mac）が押されている場合
+        if (event.ctrlKey || event.metaKey) {
+            row.classList.toggle('selected'); // 選択状態を切り替える
+        } else { // Ctrl/Commandキーが押されていない場合（単一選択モード）
+            // クリックされた行以外のすべての選択状態を解除
+            document.querySelectorAll('.selected').forEach(selectedRow => {
+                if (selectedRow !== row) {
+                    selectedRow.classList.remove('selected');
+                }
+            });
+            row.classList.toggle('selected'); // クリックされた行の選択状態を切り替える
+        }
+    }
+
+    /**
+     * 指定されたテーブルから選択されている行を全て削除する
+     * @param {HTMLElement} tableBody - 操作対象のテーブルの<tbody>要素
+     */
+    function deleteSelectedRowsFromTable(tableBody) {
+        const selectedRows = tableBody.querySelectorAll('.selected'); // 選択されている全ての行を取得
+        
+        // 取得した行を逆順にループして削除（順方向だとインデックスがずれるため）
+        for (let i = selectedRows.length - 1; i >= 0; i--) {
+            const row = selectedRows[i];
+            row.parentNode.removeChild(row); // 親要素から行を削除
+        }
+        // 削除後に残っているかもしれない選択状態のクラスを確実にクリア
         document.querySelectorAll('.selected').forEach(row => {
             row.classList.remove('selected');
         });
-        // 新しい行に'selected'クラスを追加
-        newRow.classList.add('selected');
     }
 
-    databaseTableTbody.addEventListener('click', (event) => {
-        const row = event.target.closest('tr'); // クリックされた要素から最も近いtr要素を取得
-        if (row) {
-            selectRow(row);
+    /**
+     * 変換データベースの内容をブラウザのローカルストレージに保存する
+     */
+    function saveDatabase() {
+        const database = [];
+        // データベーステーブルの各行から変換前・変換後の値を取得
+        for (let i = 0; i < databaseTableTbody.rows.length; i++) {
+            const row = databaseTableTbody.rows[i];
+            const original = row.cells[0].textContent.trim();
+            const converted = row.cells[1].textContent.trim();
+            if (original && converted) { // 両方の値があれば追加
+                database.push({ original: original, converted: converted });
+            }
         }
-    });
-
-    unregisteredTableTbody.addEventListener('click', (event) => {
-        const row = event.target.closest('tr');
-        if (row) {
-            selectRow(row);
-        }
-    });
-
-    conversionResultTableBody.addEventListener('click', (event) => {
-        const row = event.target.closest('tr');
-        if (row) {
-            selectRow(row);
-        }
-    });
-
-    // 行削除処理（共通）
-    function deleteSelectedRow(tableBody) {
-        const selectedRow = tableBody.querySelector('.selected');
-        if (selectedRow) {
-            tableBody.removeChild(selectedRow);
+        try {
+            // オブジェクトをJSON文字列に変換して保存
+            localStorage.setItem('conversionDatabase', JSON.stringify(database));
+        } catch (e) {
+            // 容量超過などのエラーを処理
+            if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+                alert('保存容量が上限に達しました。不要なデータを削除するか、ブラウザのキャッシュをクリアしてください。');
+                console.error('ローカルストレージの容量を超過しました:', e);
+            } else {
+                console.error('ローカルストレージへの保存中にエラーが発生しました:', e);
+            }
         }
     }
 
+    /**
+     * ブラウザのローカルストレージから変換データベースの内容を読み込む
+     */
+    function loadDatabase() {
+        const storedDatabase = localStorage.getItem('conversionDatabase'); // データ読み込み
+        if (storedDatabase) { // データが存在すれば
+            const database = JSON.parse(storedDatabase); // JSON文字列をオブジェクトに変換
+            // 読み込んだデータをデータベーステーブルに挿入
+            database.forEach(item => {
+                const newRow = databaseTableTbody.insertRow();
+                const cell1 = newRow.insertCell();
+                const cell2 = newRow.insertCell();
+                cell1.textContent = item.original;
+                cell2.textContent = item.converted;
+            });
+        }
+    }
+
+    // === イベントリスナーの設定 ===
+
+    // 各テーブルのtbodyにクリックイベントリスナーを設定（行選択のため）
+    databaseTableTbody.addEventListener('click', handleTableRowClick);
+    unregisteredTableTbody.addEventListener('click', handleTableRowClick);
+    conversionResultTableBody.addEventListener('click', handleTableRowClick);
+
+    // データベースパネルのボタンイベント
     deleteDatabaseRowBtn.addEventListener('click', () => {
-        deleteSelectedRow(databaseTableTbody);
-        saveDatabase();
+        deleteSelectedRowsFromTable(databaseTableTbody); // 選択行を削除
+        saveDatabase(); // 変更を保存
+    });
+    deduplicateDatabaseBtn.addEventListener('click', () => {
+        const seen = new Set(); // 重複チェック用のSet
+        // データベースを後ろからループし、重複する「変換前」の値を削除
+        for (let i = databaseTableTbody.rows.length - 1; i >= 0; i--) {
+            const row = databaseTableTbody.rows[i];
+            const originalValue = row.cells[0].textContent.trim();
+            if (seen.has(originalValue)) { // 既出の値なら削除
+                databaseTableTbody.deleteRow(i);
+            } else {
+                seen.add(originalValue); // 新しい値ならSetに追加
+            }
+        }
+        saveDatabase(); // 変更を保存
     });
 
+    // 未登録データ抽出パネルのボタンイベント
+    extractUnregisteredBtn.addEventListener('click', () => {
+        const databaseValues = new Set(); // データベースの「変換前」の値を全て取得
+        for (let i = 0; i < databaseTableTbody.rows.length; i++) {
+            databaseValues.add(databaseTableTbody.rows[i].cells[0].textContent.trim());
+        }
+
+        unregisteredTableTbody.innerHTML = ''; // 未登録テーブルをクリア
+
+        const resultValues = new Set(); // 抽出結果の重複を防ぐSet
+        // 変換結果テーブルから未登録の「変換したい文字」を抽出
+        for (let i = 0; i < conversionResultTableBody.rows.length; i++) {
+            const textToCheck = conversionResultTableBody.rows[i].cells[0].textContent.trim();
+            // データベースになく、かつ未登録リストにまだ追加されていなければ
+            if (!databaseValues.has(textToCheck) && !resultValues.has(textToCheck)) {
+                const newRow = unregisteredTableTbody.insertRow();
+                const cell1 = newRow.insertCell();
+                const cell2 = newRow.insertCell();
+                cell1.textContent = textToCheck; // 変換前はそのまま
+                cell2.innerHTML = '<input type="text">'; // 変換後には入力フィールド
+                resultValues.add(textToCheck); // 抽出済みとして記録
+            }
+        }
+
+        // 「変換後をまとめて貼り付け」ボタンがまだなければ追加
+        if (!document.getElementById('pasteAllUnregisteredBtn')) {
+            const pasteAllUnregisteredBtn = document.createElement('button');
+            pasteAllUnregisteredBtn.textContent = '変換後をまとめて貼り付け';
+            pasteAllUnregisteredBtn.id = 'pasteAllUnregisteredBtn';
+            // 未登録テーブルの直後に追加
+            unregisteredTableTbody.parentNode.insertBefore(pasteAllUnregisteredBtn, unregisteredTableTbody.nextSibling);
+
+            // 貼り付けボタンのイベントリスナー
+            pasteAllUnregisteredBtn.addEventListener('click', async () => {
+                try {
+                    const text = await navigator.clipboard.readText(); // クリップボードからテキストを読み込む
+                    const lines = text.split('\n').map(line => line.trim()); // 行ごとに分割し空白除去
+                    const inputFields = unregisteredTableTbody.querySelectorAll('input[type="text"]'); // 全ての入力フィールドを取得
+
+                    const pasteCount = Math.min(lines.length, inputFields.length); // 貼り付ける行数（少ない方に合わせる）
+                    for (let i = 0; i < pasteCount; i++) {
+                        if (inputFields[i]) {
+                            inputFields[i].value = lines[i]; // 各入力フィールドに貼り付け
+                        }
+                    }
+                    if (lines.length > inputFields.length) {
+                        alert('クリップボードの内容が未登録データ抽出の行数より多いため、一部のみ貼り付けました。');
+                    }
+                } catch (err) {
+                    console.error('クリップボードへのアクセスが拒否されました', err);
+                    alert('クリップボードへのアクセスが拒否されました。ブラウザの設定をご確認ください。');
+                }
+                pasteAllUnregisteredBtn.remove(); // 貼り付け後ボタンを削除
+            });
+        }
+    });
+
+    registerUnregisteredBtn.addEventListener('click', () => {
+        // 未登録テーブルの内容をデータベースに登録
+        for (let i = 0; i < unregisteredTableTbody.rows.length; i++) {
+            const row = unregisteredTableTbody.rows[i];
+            const original = row.cells[0].textContent.trim();
+            const convertedInput = row.cells[1].querySelector('input');
+            const converted = convertedInput ? convertedInput.value.trim() : '';
+            if (original && converted) { // 両方の値があればデータベースに追加
+                const newRow = databaseTableTbody.insertRow();
+                const cell1 = newRow.insertCell();
+                const cell2 = newRow.insertCell();
+                cell1.textContent = original;
+                cell2.textContent = converted;
+            }
+        }
+        unregisteredTableTbody.innerHTML = ''; // 未登録テーブルをクリア
+        saveDatabase(); // 変更を保存
+    });
     deleteUnregisteredRowBtn.addEventListener('click', () => {
-        deleteSelectedRow(unregisteredTableTbody);
+        deleteSelectedRowsFromTable(unregisteredTableTbody); // 選択行を削除
     });
 
-    deleteResultRowBtn.addEventListener('click', () => {
-        deleteSelectedRow(conversionResultTableBody);
-    });
-
+    // 変換実行パネルのボタンイベント
     pasteInputBtn.addEventListener('click', () => {
-        navigator.clipboard.readText()
+        navigator.clipboard.readText() // クリップボードからテキストを読み込む
             .then(text => {
+                // テキストを行ごとに分割し、変換したい文字テーブルに追加
                 const lines = text.split('\n').map(line => line.trim()).filter(line => line !== '');
                 lines.forEach(line => {
                     const newRow = conversionResultTableBody.insertRow();
                     const cell1 = newRow.insertCell();
                     const cell2 = newRow.insertCell();
-                    
                     cell1.textContent = line;
-                    cell1.contentEditable = "true";
+                    cell1.contentEditable = "true"; // 変換前の文字は編集可能にする
                     cell2.textContent = '';
                 });
             })
@@ -196,9 +346,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('クリップボードへのアクセスが拒否されました。ブラウザの設定をご確認ください。');
             });
     });
-
     convertIngredientsBtn.addEventListener('click', () => {
-        const conversionRules = {};
+        const conversionRules = {}; // データベースから変換ルールを作成
         for (let i = 0; i < databaseTableTbody.rows.length; i++) {
             const row = databaseTableTbody.rows[i];
             const original = row.cells[0].textContent.trim();
@@ -208,102 +357,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        // 変換したい文字テーブルの各行をルールに基づいて変換
         for (let i = 0; i < conversionResultTableBody.rows.length; i++) {
             const row = conversionResultTableBody.rows[i];
             const textToConvert = row.cells[0].textContent.trim();
-            row.cells[1].textContent = conversionRules[textToConvert] || '';
+            row.cells[1].textContent = conversionRules[textToConvert] || ''; // 変換後の文字を更新、ルールがなければ空
         }
     });
-
-    extractUnregisteredBtn.addEventListener('click', () => {
-        const databaseValues = new Set();
-        for (let i = 0; i < databaseTableTbody.rows.length; i++) {
-            databaseValues.add(databaseTableTbody.rows[i].cells[0].textContent.trim());
-        }
-
-        unregisteredTableTbody.innerHTML = '';
-
-        const resultValues = new Set();
-        for (let i = 0; i < conversionResultTableBody.rows.length; i++) {
-            const textToCheck = conversionResultTableBody.rows[i].cells[0].textContent.trim();
-            if (!databaseValues.has(textToCheck) && !resultValues.has(textToCheck)) {
-                const newRow = unregisteredTableTbody.insertRow();
-                const cell1 = newRow.insertCell();
-                const cell2 = newRow.insertCell();
-                cell1.textContent = textToCheck;
-                cell2.innerHTML = '<input type="text">';
-                resultValues.add(textToCheck);
-            }
-        }
-
-        // 未登録データ抽出後にまとめて貼り付けを行うボタンが存在しない場合のみ生成
-        if (!document.getElementById('pasteAllUnregisteredBtn')) {
-            const pasteAllUnregisteredBtn = document.createElement('button');
-            pasteAllUnregisteredBtn.textContent = '変換後をまとめて貼り付け';
-            pasteAllUnregisteredBtn.id = 'pasteAllUnregisteredBtn';
-            // unregisteredTableTbody の親要素から辿って挿入
-            unregisteredTableTbody.parentNode.insertBefore(pasteAllUnregisteredBtn, unregisteredTableTbody.nextSibling);
-
-            pasteAllUnregisteredBtn.addEventListener('click', async () => {
-                try {
-                    const text = await navigator.clipboard.readText();
-                    const lines = text.split('\n').map(line => line.trim());
-                    const inputFields = unregisteredTableTbody.querySelectorAll('input[type="text"]');
-
-                    const pasteCount = Math.min(lines.length, inputFields.length);
-                    for (let i = 0; i < pasteCount; i++) {
-                        if (inputFields[i]) {
-                            inputFields[i].value = lines[i];
-                        }
-                    }
-                    if (lines.length > inputFields.length) {
-                        alert('クリップボードの内容が未登録データ抽出の行数より多いため、一部のみ貼り付けました。');
-                    }
-
-                } catch (err) {
-                    console.error('クリップボードへのアクセスが拒否されました', err);
-                    alert('クリップボードへのアクセスが拒否されました。ブラウザの設定をご確認ください。');
-                }
-
-                pasteAllUnregisteredBtn.remove();
-            });
-        }
+    deleteResultRowBtn.addEventListener('click', () => {
+        deleteSelectedRowsFromTable(conversionResultTableBody); // 選択行を削除
     });
-
-    registerUnregisteredBtn.addEventListener('click', () => {
-        for (let i = 0; i < unregisteredTableTbody.rows.length; i++) {
-            const row = unregisteredTableTbody.rows[i];
-            const original = row.cells[0].textContent.trim();
-            const convertedInput = row.cells[1].querySelector('input');
-            const converted = convertedInput ? convertedInput.value.trim() : '';
-            if (original && converted) {
-                const newRow = databaseTableTbody.insertRow();
-                const cell1 = newRow.insertCell();
-                const cell2 = newRow.insertCell();
-                cell1.textContent = original;
-                cell2.textContent = converted;
-            }
-        }
-        unregisteredTableTbody.innerHTML = '';
-        saveDatabase();
-    });
-
-    deduplicateDatabaseBtn.addEventListener('click', () => {
-        const seen = new Set();
-        for (let i = databaseTableTbody.rows.length - 1; i >= 0; i--) {
-            const row = databaseTableTbody.rows[i];
-            const originalValue = row.cells[0].textContent.trim();
-            if (seen.has(originalValue)) {
-                databaseTableTbody.deleteRow(i);
-            } else {
-                seen.add(originalValue);
-            }
-        }
-        saveDatabase();
-    });
-
     copyAllResultBtn.addEventListener('click', () => {
         let allConvertedText = '';
+        // 変換結果テーブルから変換後の文字をすべて取得し結合
         for (let i = 0; i < conversionResultTableBody.rows.length; i++) {
             const row = conversionResultTableBody.rows[i];
             const convertedText = row.cells[1].textContent.trim();
@@ -312,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        if (allConvertedText) {
+        if (allConvertedText) { // コピーするテキストがあればクリップボードに書き込み
             navigator.clipboard.writeText(allConvertedText.trimEnd())
                 .then(() => {
                     alert('変換後のデータをまとめてコピーしました！');
@@ -326,43 +392,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    function saveDatabase() {
-        const database = [];
-        for (let i = 0; i < databaseTableTbody.rows.length; i++) {
-            const row = databaseTableTbody.rows[i];
-            const original = row.cells[0].textContent.trim();
-            const converted = row.cells[1].textContent.trim();
-            if (original && converted) {
-                database.push({ original: original, converted: converted });
-            }
-        }
-        try {
-            localStorage.setItem('conversionDatabase', JSON.stringify(database));
-        } catch (e) {
-            if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
-                alert('保存容量が上限に達しました。不要なデータを削除するか、ブラウザのキャッシュをクリアしてください。');
-                console.error('ローカルストレージの容量を超過しました:', e);
-            } else {
-                console.error('ローカルストレージへの保存中にエラーが発生しました:', e);
-            }
-        }
-    }
-
-    function loadDatabase() {
-        const storedDatabase = localStorage.getItem('conversionDatabase');
-        if (storedDatabase) {
-            const database = JSON.parse(storedDatabase);
-            database.forEach(item => {
-                const newRow = databaseTableTbody.insertRow();
-                const cell1 = newRow.insertCell();
-                const cell2 = newRow.insertCell();
-                cell1.textContent = item.original;
-                cell2.textContent = item.converted;
-            });
-        }
-    }
-
-    window.addEventListener('load', loadDatabase);
+    // === アプリ初期化処理 ===
+    // ページロード時にデータベースを読み込む
+    loadDatabase(); 
 });
 </script>
 </body>
