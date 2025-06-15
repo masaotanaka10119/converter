@@ -117,9 +117,9 @@ input[type="text"] {
 document.addEventListener('DOMContentLoaded', () => {
     // === DOM要素の取得 ===
     // 各テーブルの<tbody>要素を取得
-    const databaseTableTbody = document.getElementById('databaseTable').getElementsByTagName('tbody')[0];
-    const unregisteredTableTbody = document.getElementById('unregisteredTable').getElementsByTagName('tbody')[0];
-    const conversionResultTableBody = document.getElementById('conversionResultTable').getElementsByTagName('tbody')[0];
+    const databaseTableTbody = document.getElementById('databaseTableBody');
+    const unregisteredTableTbody = document.getElementById('unregisteredTableBody');
+    const conversionResultTableBody = document.getElementById('conversionResultTableBody');
 
     // 各ボタン要素を取得
     const deleteDatabaseRowBtn = document.getElementById('deleteDatabaseRowBtn');
